@@ -2,18 +2,23 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>101 Archive</title>
   <style>
-    /* Reset + fondo */
-    html, body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
       height: 100%;
       background: black;
       overflow: hidden;
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* Video de fondo ocupando toda la pantalla */
     .background-video {
       position: fixed;
       top: 0;
@@ -21,37 +26,25 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      z-index: -1;
-      animation: fadeIn 2s ease-in forwards;
-      opacity: 0;
+      z-index: 1;
     }
 
-    /* Botón ENTER ARCHIVE */
     .enter-archive {
-      position: absolute;
+      position: fixed;
       bottom: 40px;
       right: 60px;
       font-size: 16px;
       letter-spacing: 3px;
       color: white;
       text-decoration: none;
-      opacity: 0;
-      animation: fadeIn 2.5s ease-in forwards;
-      animation-delay: 1s;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      cursor: pointer;
       z-index: 10;
+      cursor: pointer;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     .enter-archive:hover {
-      opacity: 1;
+      opacity: 0.7;
       transform: translateX(5px);
-    }
-
-    /* Animación fade */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
   </style>
 </head>
@@ -59,7 +52,6 @@
   <!-- Video de fondo -->
   <video class="background-video" autoplay loop muted playsinline>
     <source src="video.mp4" type="video/mp4">
-    Tu navegador no soporta video HTML5.
   </video>
 
   <!-- CTA minimalista -->
