@@ -3,22 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <title>101 Archive</title>
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
     /* Reset + fondo */
     html, body {
       margin: 0;
       height: 100%;
-      background: linear-gradient(180deg, #000000 0%, #111111 100%);
+      background: black;
       overflow: hidden;
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* Modelo ocupando la pantalla */
-    model-viewer {
+    /* Video de fondo ocupando toda la pantalla */
+    .background-video {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      --poster-color: transparent;
+      object-fit: cover;
+      z-index: -1;
       animation: fadeIn 2s ease-in forwards;
       opacity: 0;
     }
@@ -36,6 +39,8 @@
       animation: fadeIn 2.5s ease-in forwards;
       animation-delay: 1s;
       transition: opacity 0.3s ease, transform 0.3s ease;
+      cursor: pointer;
+      z-index: 10;
     }
 
     .enter-archive:hover {
@@ -51,16 +56,11 @@
   </style>
 </head>
 <body>
-  <!-- Modelo 3D -->
-  <model-viewer
-    src="101.glb"
-    camera-controls
-    auto-rotate
-    rotation-per-second="20deg"
-    environment-image="neutral"
-    exposure="1.2"
-    shadow-intensity="1">
-  </model-viewer>
+  <!-- Video de fondo -->
+  <video class="background-video" autoplay loop muted playsinline>
+    <source src="video.mp4" type="video/mp4">
+    Tu navegador no soporta video HTML5.
+  </video>
 
   <!-- CTA minimalista -->
   <a href="#" class="enter-archive">ENTER ARCHIVE →</a>
