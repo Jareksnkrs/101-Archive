@@ -21,6 +21,7 @@ export default async function handler(req, res) {
         description: "Banco + mancuernas + barra Z · Descanso 60–90s",
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
+        is_private: true,
         exercises: [
           {
             exercise_template_id: "107", // Dumbbell Bench Press
@@ -76,30 +77,4 @@ export default async function handler(req, res) {
       }
     };
 
-    const response = await fetch("https://api.hevyapp.com/v1/workouts", {
-      method: "POST",
-      headers: {
-        "api-key": apiKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(workout)
-    });
-
-    const data = await response.json();
-
-    return res.status(200).json({
-      success: response.ok,
-      status: response.status,
-      message: response.ok
-        ? "✅ ¡Entreno creado! Abre Hevy → Workouts"
-        : "❌ Error al crear entreno",
-      hevy: data
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
+    const response = await fetch
