@@ -2,78 +2,44 @@
 export default async function handler(req, res) {
   try {
     const apiKey = process.env.HEVY_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "Falta API KEY" });
 
-    if (!apiKey) {
-      return res.status(500).json({ error: "Falta HEVY_API_KEY en Vercel" });
-    }
-
-    if (req.method !== "GET") {
-      return res.status(405).json({ error: "Método no permitido" });
-    }
-
-    // Hora inicio y fin (entreno de 60 minutos)
+    // Detectar qué día queremos (por defecto el A)
+    const dia = req.query.dia || 'A';
+    
     const startTime = new Date();
     const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
 
-    const workout = {
+    // Definición de los entrenos
+    const entrenos = {
+      'A': {
+        title: "Jarek · Día A (Pecho/Espalda/Brazos)",
+        exercises: [
+          { exercise_template_id: "107", sets: [{ type: "normal", weight_kg: 10, reps: 15 }, { type: "normal", weight_kg: 10, reps: 15 }, { type: "normal", weight_kg: 10, reps: 15 }] },
+          { exercise_template_id: "111", sets: [{ type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }] },
+          { exercise_template_id: "158", sets: [{ type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }] }
+        ]
+      },
+      'B': {
+        title: "Jarek · Día B (Pierna/Hombro)",
+        exercises: [
+          { exercise_template_id: "141", sets: [{ type: "normal", weight_kg: 10, reps: 20 }, { type: "normal", weight_kg: 10, reps: 20 }, { type: "normal", weight_kg: 10, reps: 20 }] },
+          { exercise_template_id: "124", sets: [{ type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }] },
+          { exercise_template_id: "174", sets: [{ type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }] }
+        ]
+      }
+    };
+
+    const seleccion = entrenos[dia.toUpperCase()] || entrenos['A'];
+
+    const workoutPayload = {
       workout: {
-        title: "Jarek · Casa · Día A",
-        description: "Banco + mancuernas + barra Z · Descanso 60–90s",
+        title: seleccion.title,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
+        description: "Generado por Gemini para Jarek",
         is_private: true,
-        exercises: [
-          {
-            exercise_template_id: "107", // Dumbbell Bench Press
-            sets: [
-              { type: "normal", weight_kg: 10, reps: 15 },
-              { type: "normal", weight_kg: 10, reps: 15 },
-              { type: "normal", weight_kg: 10, reps: 15 },
-              { type: "normal", weight_kg: 10, reps: 15 }
-            ]
-          },
-          {
-            exercise_template_id: "111", // One-arm Dumbbell Row
-            sets: [
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 }
-            ]
-          },
-          {
-            exercise_template_id: "108", // Incline Dumbbell Press
-            sets: [
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 }
-            ]
-          },
-          {
-            exercise_template_id: "124", // Dumbbell Shoulder Press
-            sets: [
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 }
-            ]
-          },
-          {
-            exercise_template_id: "158", // Barbell Curl (barra Z)
-            sets: [
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 }
-            ]
-          },
-          {
-            exercise_template_id: "174", // Skullcrusher
-            sets: [
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 },
-              { type: "normal", weight_kg: 10, reps: 12 }
-            ]
-          }
-        ]
+        exercises: seleccion.exercises
       }
     };
 
