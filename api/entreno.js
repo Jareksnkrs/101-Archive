@@ -6,81 +6,90 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const callHevy = async (path) => {
-    const url = `https://api.hevyapp.com${path}`;
-    const r = await fetch(url, {
-      method: "GET",
-      headers: {
-        "api-key": apiKey,
-        "Content-Type": "application/json",
-      },
+  if (req.query.action !== "create_default") {
+    return res.status(400).json({ error: "Usa ?action=create_default" });
+  }
+
+  const baseRoutine = {
+    title: "Jarek - Fase 1 (2 Semanas)",
+    notes: "Rutina casa. Peso limitado -> reps altas + tempo lento. Descanso 60-90s.",
+    exercises: [
+      // OJO: esto seguirá fallando si Hevy exige IDs distintos, pero ya vimos que exercise_template_id es el campo correcto.
+      { exercise_template_id: "107", sets: [{ type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }] }
+    ]
+  };
+
+  const folderFieldNames = [
+    "routine_folder_id",
+    "folder_id",
+    "routineFolderId",
+    "routine_folder",
+    "folder"
+  ];
+
+  const folderValuesToTry = [null, "", "default", "0"];
+
+  const attempts = [];
+
+  for (const field of folderFieldNames) {
+    for (const value of folderValuesToTry) {
+      const routine = { ...baseRoutine, [field]: value };
+      const payload = { routine };
+
+      try {
+        const r = await fetch("https://api.hevyapp.com/v1/routines", {
+          method: "POST",
+          headers: {
+            "api-key": apiKey,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await r.text();
+        let parsed;
+        try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
+
+        attempts.push({
+          tried: { field, value },
+          status: r.status,
+          response: parsed
+        });
+
+        if (r.ok) {
+          return res.status(200).json({
+            success: true,
+            workedWith: { field, value },
+            hevy: parsed,
+            attempts
+          });
+        }
+      } catch (e) {
+        attempts.push({ tried: { field, value }, status: "FETCH_ERROR", response: { message: e.message } });
+      }
+    }
+  }
+
+  // Último intento: sin campo folder, pero asegurando que no mandamos undefined
+  try {
+    const payload = { routine: baseRoutine };
+    const r = await fetch("https://api.hevyapp.com/v1/routines", {
+      method: "POST",
+      headers: { "api-key": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
+
     const text = await r.text();
     let parsed;
     try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
-    return { path, status: r.status, body: parsed };
-  };
 
-  if (req.query.action === "debug_folders") {
-    // Probamos varias rutas típicas para “folders”
-    const candidates = [
-      "/v1/routine-folders",
-      "/v1/routine_folders",
-      "/v1/folders",
-      "/v1/routines/folders",
-      "/v1/routineFolders",
-      "/v1/routine_folders?page=1",
-      "/v1/routines?page=1"
-    ];
+    attempts.push({ tried: { field: "(none)", value: "(none)" }, status: r.status, response: parsed });
 
-    const results = [];
-    for (const p of candidates) {
-      try {
-        results.push(await callHevy(p));
-      } catch (e) {
-        results.push({ path: p, status: "FETCH_ERROR", body: { message: e.message } });
-      }
-    }
-
-    return res.status(200).json({ success: true, results });
-  }
-
-  if (req.query.action === "create_default") {
-    // Intento de creación mínimo, te devolverá el error exacto para ajustar el campo folder
-    const payload = {
-      routine: {
-        title: "Jarek - Test",
-        notes: "Creación mínima para ver el schema exacto",
-        exercises: [
-          { exercise_template_id: "107", sets: [{ type: "normal", reps: 10 }] }
-        ]
-      }
-    };
-
-    try {
-      const r = await fetch("https://api.hevyapp.com/v1/routines", {
-        method: "POST",
-        headers: {
-          "api-key": apiKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const text = await r.text();
-      let parsed;
-      try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
-
-      return res.status(200).json({
-        success: r.ok,
-        status: r.status,
-        hevy: parsed,
-        sent: payload
-      });
-    } catch (e) {
-      return res.status(500).json({ success: false, error: e.message });
-    }
-  }
-
-  return res.status(400).json({ error: "action inválida" });
-}
+    return res.status(200).json({
+      success: r.ok,
+      workedWith: null,
+      hevy: parsed,
+      attempts
+    });
+  } catch (e) {
+    attempts.push({ tried: { field: "(none)", value: "(none)" },
