@@ -10,23 +10,22 @@ export default async function handler(req, res) {
     const rutinaDefault = {
       routine: {
         title: "Jarek - Fase 1 (2 Semanas)",
-        notes: "Enfoque: Hipertrofia con peso limitado (10kg máx por mancuerna). Descansos: 60s. Progresión: cuando completes todas las reps fácil, haz tempo más lento (3-0-3) o añade pausa de 2s en contracción.",
+        notes: "Enfoque: Hipertrofia con peso limitado (10kg máx). Descansos: 60s.",
         exercises: [
-          { title: "DÍA A - Pecho/Espalda", sets: [] },
-          { title: "Press de Banca con Mancuernas (Plano)", sets: [{ type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }] },
-          { title: "Remo con Barra Z (Agarre Supino)", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { title: "Press Inclinado con Mancuernas", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { title: "Pullover con Mancuerna", sets: [{ type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }] },
-          { title: "DÍA B - Pierna/Hombro", sets: [] },
-          { title: "Sentadilla Goblet con Mancuerna", sets: [{ type: "normal", reps: 20 }, { type: "normal", reps: 20 }, { type: "normal", reps: 20 }, { type: "normal", reps: 20 }] },
-          { title: "Peso Muerto Rumano con Barra Z", sets: [{ type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }] },
-          { title: "Press Militar Sentado con Mancuernas", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { title: "Elevaciones Laterales con Mancuernas", sets: [{ type: "normal", reps: 20 }, { type: "normal", reps: 20 }, { type: "normal", reps: 20 }] },
-          { title: "DÍA C - Brazos/Espalda", sets: [] },
-          { title: "Remo con Mancuerna a 1 Brazo (Apoyado en Banco)", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { title: "Press Francés con Barra Z (Skullcrushers)", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { title: "Curl de Bíceps con Barra Z", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { title: "Aperturas con Mancuernas (Inclinado Suave)", sets: [{ type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }] }
+          // Press de Banca con Mancuernas (ID: 107)
+          { exercise_template_id: "107", sets: [{ type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }] },
+          // Remo con Mancuerna a una mano (ID: 111)
+          { exercise_template_id: "111", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
+          // Press Inclinado con Mancuernas (ID: 108)
+          { exercise_template_id: "108", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
+          // Sentadilla Goblet (ID: 141)
+          { exercise_template_id: "141", sets: [{ type: "normal", reps: 20 }, { type: "normal", reps: 20 }, { type: "normal", reps: 20 }] },
+          // Press Militar Mancuernas (ID: 124)
+          { exercise_template_id: "124", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
+          // Curl de Bíceps con Barra (ID: 158) - Usamos este para tu barra Z
+          { exercise_template_id: "158", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
+          // Press Francés / Skullcrusher (ID: 174)
+          { exercise_template_id: "174", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] }
         ]
       }
     };
@@ -47,34 +46,25 @@ export default async function handler(req, res) {
         return res.status(response.status).json({ success: false, hevyError: data });
       }
 
-      return res.status(200).json({ success: true, message: '✅ ¡Rutina creada en Hevy! Abre tu app y ve a Routines.', data });
+      return res.status(200).json({ success: true, message: '✅ ¡Rutina creada! Revisa Hevy.', data });
     } catch (error) {
       return res.status(500).json({ success: false, error: error.message });
     }
   }
 
+  // Soporte para POST (por si lo usamos en el futuro)
   const { rutina } = req.body;
-  if (!rutina) {
-    return res.status(400).json({ error: 'No se ha proporcionado ninguna rutina' });
-  }
+  if (!rutina) return res.status(400).json({ error: 'No rutina' });
 
   try {
     const response = await fetch('https://api.hevyapp.com/v1/routines', {
       method: 'POST',
-      headers: {
-        'api-key': apiKey,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
       body: JSON.stringify(rutina)
     });
-
     const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Error al conectar con Hevy');
-    }
-
-    return res.status(200).json({ success: true, message: 'Rutina creada en Hevy', data });
+    return res.status(response.status).json(data);
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 }
