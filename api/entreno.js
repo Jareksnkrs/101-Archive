@@ -1,19 +1,16 @@
 // api/entreno.js
 export default async function handler(req, res) {
-  // 1. Configuración de seguridad y headers
   res.setHeader('Content-Type', 'application/json');
   
   try {
     const apiKey = process.env.HEVY_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: "Falta la variable HEVY_API_KEY en Vercel" });
+      return res.status(500).json({ error: "Falta HEVY_API_KEY" });
     }
 
-    // 2. Definición de tiempos
     const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + 3600000); // +1 hora
+    const endTime = new Date(startTime.getTime() + 3600000);
 
-    // 3. Construcción del entrenamiento (Día A)
     const workoutPayload = {
       workout: {
         title: "Jarek · Casa · Día A",
@@ -23,43 +20,54 @@ export default async function handler(req, res) {
         is_private: true,
         exercises: [
           {
-            exercise_template_id: "107", // Press Banca Mancuernas
-            sets: [{ type: "normal", weight_kg: 10, reps: 15 }, { type: "normal", weight_kg: 10, reps: 15 }]
+            exercise_template_id: "107",
+            sets: [
+              { type: "normal", weight_kg: 10, reps: 15 },
+              { type: "normal", weight_kg: 10, reps: 15 }
+            ]
           },
           {
-            exercise_template_id: "111", // Remo Mancuerna
-            sets: [{ type: "normal", weight_kg: 10, reps: 12 }, { type: "normal", weight_kg: 10, reps: 12 }]
+            exercise_template_id: "111",
+            sets: [
+              { type: "normal", weight_kg: 10, reps: 12 },
+              { type: "normal", weight_kg: 10, reps: 12 }
+            ]
           }
         ]
       }
     };
 
-    // 4. Petición a Hevy usando la URL completa
     const response = await fetch("https://api.hevyapp.com/v1/workouts", {
       method: "POST",
       headers: {
         "api-key": apiKey,
-        "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Content-Type": "application/json"
       },
       body: JSON.stringify(workoutPayload)
     });
 
-    const data = await response.json();
+    // Capturamos primero como texto
+    const text = await response.text();
+    
+    // Intentamos parsearlo como JSON
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      // Si no es JSON, devolvemos el texto crudo
+      data = { raw: text };
+    }
 
-    // 5. Respuesta al usuario
-    return res.status(response.status).json({
+    return res.status(200).json({
       success: response.ok,
       status: response.status,
       hevyResponse: data
     });
 
   } catch (error) {
-    // Si hay un crash, lo capturamos y lo mostramos
     return res.status(500).json({
       error: "Crash en la función",
-      message: error.message,
-      stack: error.stack
+      message: error.message
     });
   }
 }
