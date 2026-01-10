@@ -2,88 +2,85 @@
 export default async function handler(req, res) {
   const apiKey = process.env.HEVY_API_KEY;
 
-  if (req.method !== 'POST' && req.method !== 'GET') {
-    return res.status(405).json({ error: 'Método no permitido' });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Método no permitido" });
   }
 
-  // NUEVO: Obtener las carpetas de rutinas
-  if (req.method === 'GET' && req.query.action === 'get_folders') {
-    try {
-      const response = await fetch('https://api.hevyapp.com/v1/routine_folders', {
-        method: 'GET',
-        headers: {
-          'api-key': apiKey,
-          'Content-Type': 'application/json'
-        }
-      });
+  const callHevy = async (path) => {
+    const url = `https://api.hevyapp.com${path}`;
+    const r = await fetch(url, {
+      method: "GET",
+      headers: {
+        "api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+    });
+    const text = await r.text();
+    let parsed;
+    try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
+    return { path, status: r.status, body: parsed };
+  };
 
-      const data = await response.json();
+  if (req.query.action === "debug_folders") {
+    // Probamos varias rutas típicas para “folders”
+    const candidates = [
+      "/v1/routine-folders",
+      "/v1/routine_folders",
+      "/v1/folders",
+      "/v1/routines/folders",
+      "/v1/routineFolders",
+      "/v1/routine_folders?page=1",
+      "/v1/routines?page=1"
+    ];
 
-      if (!response.ok) {
-        return res.status(response.status).json({ success: false, hevyError: data });
+    const results = [];
+    for (const p of candidates) {
+      try {
+        results.push(await callHevy(p));
+      } catch (e) {
+        results.push({ path: p, status: "FETCH_ERROR", body: { message: e.message } });
       }
-
-      return res.status(200).json({ success: true, folders: data });
-    } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
     }
+
+    return res.status(200).json({ success: true, results });
   }
 
-  if (req.method === 'GET' && req.query.action === 'create_default') {
-    // Usamos el folder_id que pasemos por parámetro, o null si no existe
-    const folderId = req.query.folder_id || null;
-
-    const rutinaDefault = {
+  if (req.query.action === "create_default") {
+    // Intento de creación mínimo, te devolverá el error exacto para ajustar el campo folder
+    const payload = {
       routine: {
-        title: "Jarek - Fase 1 (2 Semanas)",
-        notes: "Enfoque: Hipertrofia con peso limitado (10kg máx). Descansos: 60s.",
-        folder_id: folderId,
+        title: "Jarek - Test",
+        notes: "Creación mínima para ver el schema exacto",
         exercises: [
-          { exercise_template_id: "107", sets: [{ type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }, { type: "normal", reps: 15 }] },
-          { exercise_template_id: "111", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { exercise_template_id: "108", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { exercise_template_id: "141", sets: [{ type: "normal", reps: 20 }, { type: "normal", reps: 20 }, { type: "normal", reps: 20 }] },
-          { exercise_template_id: "124", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { exercise_template_id: "158", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] },
-          { exercise_template_id: "174", sets: [{ type: "normal", reps: 12 }, { type: "normal", reps: 12 }, { type: "normal", reps: 12 }] }
+          { exercise_template_id: "107", sets: [{ type: "normal", reps: 10 }] }
         ]
       }
     };
 
     try {
-      const response = await fetch('https://api.hevyapp.com/v1/routines', {
-        method: 'POST',
+      const r = await fetch("https://api.hevyapp.com/v1/routines", {
+        method: "POST",
         headers: {
-          'api-key': apiKey,
-          'Content-Type': 'application/json'
+          "api-key": apiKey,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(rutinaDefault)
+        body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      const text = await r.text();
+      let parsed;
+      try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
 
-      if (!response.ok) {
-        return res.status(response.status).json({ success: false, hevyError: data });
-      }
-
-      return res.status(200).json({ success: true, message: '✅ ¡Rutina creada! Revisa Hevy.', data });
-    } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
+      return res.status(200).json({
+        success: r.ok,
+        status: r.status,
+        hevy: parsed,
+        sent: payload
+      });
+    } catch (e) {
+      return res.status(500).json({ success: false, error: e.message });
     }
   }
 
-  const { rutina } = req.body;
-  if (!rutina) return res.status(400).json({ error: 'No rutina' });
-
-  try {
-    const response = await fetch('https://api.hevyapp.com/v1/routines', {
-      method: 'POST',
-      headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify(rutina)
-    });
-    const data = await response.json();
-    return res.status(response.status).json(data);
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
+  return res.status(400).json({ error: "action inválida" });
 }
