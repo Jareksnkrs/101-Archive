@@ -11,14 +11,16 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Método no permitido" });
     }
 
-    // Fecha/hora actual en formato ISO (lo que Hevy espera)
-    const now = new Date().toISOString();
+    // Hora inicio y fin (entreno de 60 minutos)
+    const startTime = new Date();
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
 
     const workout = {
       workout: {
         title: "Jarek · Casa · Día A",
-        description: "Banco + mancuernas 10kg + barra Z · Descanso 60–90s",
-        start_time: now,
+        description: "Banco + mancuernas + barra Z · Descanso 60–90s",
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
         exercises: [
           {
             exercise_template_id: "107", // Dumbbell Bench Press
@@ -55,7 +57,7 @@ export default async function handler(req, res) {
             ]
           },
           {
-            exercise_template_id: "158", // Barbell Curl (para tu barra Z)
+            exercise_template_id: "158", // Barbell Curl (barra Z)
             sets: [
               { type: "normal", weight_kg: 10, reps: 12 },
               { type: "normal", weight_kg: 10, reps: 12 },
@@ -63,7 +65,7 @@ export default async function handler(req, res) {
             ]
           },
           {
-            exercise_template_id: "174", // Lying Triceps Extension (Skullcrusher con barra Z)
+            exercise_template_id: "174", // Skullcrusher
             sets: [
               { type: "normal", weight_kg: 10, reps: 12 },
               { type: "normal", weight_kg: 10, reps: 12 },
@@ -88,7 +90,9 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: response.ok,
       status: response.status,
-      message: response.ok ? "✅ ¡Entreno creado! Abre Hevy y ve a Workouts." : "Error al crear",
+      message: response.ok
+        ? "✅ ¡Entreno creado! Abre Hevy → Workouts"
+        : "❌ Error al crear entreno",
       hevy: data
     });
 
